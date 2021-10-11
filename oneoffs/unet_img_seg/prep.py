@@ -1,6 +1,6 @@
 import numpy as np
-from tensorflow.keras.utils.Sequence
-from tensorflow.keras.preprocessing import load_img
+from tensorflow.keras.utils import Sequence
+from tensorflow.keras.preprocessing.image import load_img
 
 
 class Batcher(Sequence):
