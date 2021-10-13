@@ -1,4 +1,5 @@
 import os
+import random
 
 import PIL
 from   PIL import Image, ImageOps
@@ -18,6 +19,9 @@ TARGET_DIR = f'{IMG}/unet_annotations/trimaps/'
 IMG_SIZE = (160, 160)
 N_CLASSES = 3
 BATCH = 32
+VALID_SAMPLES = 1000
+SEED = 777
+EPOCHS = 15
 
 
 def main():
@@ -26,6 +30,13 @@ def main():
     keras.backend.clear_session()
     mod = get_mod()
     print(mod.summary())
+    train_gen, val_gen = get_data_batchers(input_img_paths, target_img_paths)
+    mod.compile(optimizer='rmsprop', loss='sparse_categorical_crossentropy')
+    callbacks = [
+        keras.callbacks.ModelCheckpoint('animal_seg.h5', save_best_only=True)]
+    mod.fit(
+        train_gen, validation_data=val_gen, epochs=EPOCHS, callbacks=callbacks)
+                 
     
 
 def prep_data():
@@ -92,6 +103,20 @@ def get_mod():
     mod = Model(inputs, outputs)
     return mod
 
+
+def get_data_batchers(input_img_paths, target_img_paths):
+    random.Random(SEED).shuffle(input_img_paths)
+    random.Random(SEED).shuffle(target_img_paths)
+    train_input_img_paths = input_img_paths[:-VALID_SAMPLES]
+    train_target_img_paths = input_img_paths[:-VALID_SAMPLES]
+    val_input_img_paths = input_img_paths[-VALID_SAMPLES:]
+    val_target_img_paths = target_img_paths[-VALID_SAMPLES:]
+    train_gen = Batcher(
+        BATCH, IMG_SIZE, train_input_img_paths, train_target_img_paths)
+    val_gen = Batcher(
+        BATCH, IMG_SIZE, val_input_img_paths, val_target_img_paths)
+    return train_gen, val_gen
+    
 
 if __name__ == '__main__':
     main()
