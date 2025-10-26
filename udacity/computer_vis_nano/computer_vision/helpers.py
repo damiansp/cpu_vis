@@ -1,6 +1,7 @@
 import glob
 import os
 
+import cv2
 import matplotlib.image as mpimg
 
 
@@ -18,3 +19,23 @@ def load_dataset(image_dir):
     return im_list
 
 
+def standardize_input(image):  
+    H = 600
+    W = 1100
+    standard_im = cv2.resize(image, (W, H))
+    return standard_im
+
+
+def encode(label):
+    numerical_val = 1 if label == 'day' else 0
+    return numerical_val
+
+
+def standardize(image_list):
+    standard_list = []
+    for item in image_list:
+        image, label = item
+        standardized_im = standardize_input(image)
+        binary_label = encode(label)    
+        standard_list.append((standardized_im, binary_label))        
+    return standard_list
