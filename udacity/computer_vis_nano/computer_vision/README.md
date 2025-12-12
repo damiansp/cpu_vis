@@ -1,0 +1,2 @@
+- <a href="https://github.com/udacity/P1_Facial_Keypoints">Project Repo</a>
+- <a href="https://www.udacity.com/rubric/1426">Grading Rubric</a>
