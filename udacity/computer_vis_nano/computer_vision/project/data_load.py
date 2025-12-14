@@ -1,4 +1,3 @@
-import glob
 import os
 
 import cv2
@@ -6,7 +5,7 @@ import matplotlib.image as mpimg
 import numpy as np
 import pandas as pd
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 
 
 class FacialKeypointsDataset(Dataset):
@@ -40,7 +39,7 @@ class FacialKeypointsDataset(Dataset):
         return sample
 
     @staticmethod
-    def _drop_alpha(image)
+    def _drop_alpha(image):
         # if image has an alpha color channel, get rid of it
         if(image.shape[2] == 4):
             image = image[:, :, 0:3]
