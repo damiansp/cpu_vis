@@ -79,24 +79,29 @@ class ConvBlock(nn.Module):
 class ResidBlock(nn.Module):
     def __init__(self, in_ch, out_ch, stride=1):
         super().__init__()
-        self.conv1 = ConvBlock(in_ch, out_ch, stride=stride)
-        self.conv2 = nn.Sequential(
+        self.main = nn.Sequential(
+            nn.Conv2d(
+                in_ch,
+                out_ch,
+                kernel_size=3,
+                stride=stride,
+                padding=1,
+                bias=False),
+            nn.ReLU(inplace=True),
             nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(out_ch))
+        self.skip = nn.Identity()
         if stride != 1 or in_ch != out_ch:
-            self.shortcut = nn.Sequential(
+            self.skip = nn.Sequential(
                 nn.Conv2d(
                     in_ch, out_ch, kernel_size=1, stride=stride, bias=False),
                 nn.BatchNorm2d(out_ch))
-        else:
-            self.shortcut = nn.Identity()
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x):
-        x = self.conv1(x)
-        x = self.conv2(x)
-        x += self.shortcut(x)
-        return self.relu(x)
+        out = self.main(x)
+        skip = self.skip(x)
+        return self.relu(out + skip)
 
     
 class Net2(nn.Module):
@@ -106,12 +111,18 @@ class Net2(nn.Module):
         self.stage1 = ResidBlock(32, 64, stride=2)
         self.stage2 = ResidBlock(64, 128, stride=2)
         self.stage3 = ResidBlock(128, 256, stride=2)
+        self.stage4 = ResidBlock(256, 512, stride=2)
         self.gap = nn.AdaptiveAvgPool2d(1)
         self.classifier = nn.Sequential(
-            nn.Linear(256, 256),
+            nn.Linear(512, 512),
             nn.ReLU(inplace=True),
             nn.Dropout(0.5),
-            nn.Linear(256, n_classes))
+            ###
+            nn.Linear(512, 512),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.5),
+            ###
+            nn.Linear(512, n_classes))
         self.apply(init_weights)
 
     def forward(self, x):
@@ -119,6 +130,7 @@ class Net2(nn.Module):
         x = self.stage1(x)
         x = self.stage2(x)
         x = self.stage3(x)
+        x = self.stage4(x)
         x = self.gap(x)
         x = torch.flatten(x, 1)
         x = self.classifier(x)
