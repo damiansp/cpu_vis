@@ -112,17 +112,18 @@ class Net2(nn.Module):
         self.stage2 = ResidBlock(64, 128, stride=2)
         self.stage3 = ResidBlock(128, 256, stride=2)
         self.stage4 = ResidBlock(256, 512, stride=2)
+        self.stage5 = ResidBlock(512, 1024, stride=2)
         self.gap = nn.AdaptiveAvgPool2d(1)
         self.classifier = nn.Sequential(
-            nn.Linear(512, 512),
+            nn.Linear(1024, 512),
             nn.ReLU(inplace=True),
             nn.Dropout(0.5),
             ###
-            nn.Linear(512, 512),
+            nn.Linear(512, 256),
             nn.ReLU(inplace=True),
             nn.Dropout(0.5),
             ###
-            nn.Linear(512, n_classes))
+            nn.Linear(256, n_classes))
         self.apply(init_weights)
 
     def forward(self, x):
@@ -131,6 +132,7 @@ class Net2(nn.Module):
         x = self.stage2(x)
         x = self.stage3(x)
         x = self.stage4(x)
+        x = self.stage5(x)
         x = self.gap(x)
         x = torch.flatten(x, 1)
         x = self.classifier(x)
